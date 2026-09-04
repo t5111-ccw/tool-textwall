@@ -6,75 +6,115 @@
     <title>互動式馬卡龍即時文字牆</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Matter.js 物理引擎 -->
+    <!-- Matter.js Physics Engine -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <!-- QRCode.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Varela+Round&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+    <!-- Google Fonts: Noto Sans TC -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Varela Round', 'ZCOOL KuaiLe', sans-serif; background-color: #fdfbf7; overflow: hidden; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: #faf8f5; overflow: hidden; }
         .macaron-pink { background-color: #ffb7b2; }
         .macaron-blue { background-color: #b5ead7; }
         .macaron-yellow { background-color: #ffdac1; }
         .macaron-purple { background-color: #e2f0cb; }
         .macaron-mint { background-color: #c7ceea; }
+
+        /* Container Graphic Floating Animation */
+        @keyframes gentleSway {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-4px); }
+        }
+        .container-art {
+            animation: gentleSway 5s ease-in-out infinite;
+        }
+
+        /* SVG Drop Shadow */
+        .svg-shadow {
+            filter: drop-shadow(0 16px 28px rgba(0, 0, 0, 0.12));
+        }
     </style>
 </head>
-<body class="w-screen h-screen flex flex-col justify-between select-none relative">
+<body class="w-screen h-screen flex flex-col justify-between select-none relative overflow-hidden">
 
-    <header class="w-full p-6 flex justify-between items-center z-20 bg-white/85 backdrop-blur-md shadow-sm">
+    <!-- 頂端導覽列 / 標題列 -->
+    <header class="w-full px-6 py-4 flex justify-between items-center z-30 bg-white/85 backdrop-blur-md shadow-sm border-b border-gray-100">
         <div>
-            <h1 id="main-title" class="text-3xl md:text-5xl font-bold text-gray-700 tracking-wide">✨ 丟掉煩惱、留下真心話 ✨</h1>
-            <p id="main-subtitle" class="text-lg md:text-xl text-gray-500 mt-1">請用手機掃描 QR Code 把想法丟進垃圾桶！</p>
+            <h1 id="main-title" class="text-2xl md:text-3xl font-bold text-gray-800 tracking-wide flex items-center gap-2">
+                <span id="title-icon">🗑️</span>
+                <span id="title-text">丟掉煩惱、留下真心話</span>
+            </h1>
+            <p id="main-subtitle" class="text-sm md:text-base text-gray-500 mt-0.5">請用手機掃描 QR Code 把想法投遞進來！</p>
         </div>
-        <div class="flex items-center gap-4">
-            <!-- 互動模組切換選單 -->
-            <select id="module-select" class="px-4 py-3 bg-white border-2 border-pink-200 text-gray-700 font-bold text-lg rounded-full shadow-md focus:outline-none cursor-pointer">
-                <option value="trash">🗑️ 垃圾桶 (紙球)</option>
-                <option value="well">⛲ 許願池 (金幣)</option>
-                <option value="vote">🗳️ 投票箱 (選票)</option>
-            </select>
-            <button id="qr-btn" class="px-6 py-3 bg-pink-400 hover:bg-pink-500 text-white font-bold text-xl rounded-full shadow-lg transition transform hover:scale-105 cursor-pointer">
-                📱 QR Code
+        <div class="flex items-center gap-3">
+            <!-- 模組切換選單 -->
+            <div class="relative">
+                <select id="module-select" class="px-4 py-2.5 bg-white border-2 border-pink-200 text-gray-700 font-bold text-sm md:text-base rounded-full shadow-sm focus:outline-none cursor-pointer pr-9 appearance-none">
+                    <option value="trash">🗑️ 垃圾桶 (紙球)</option>
+                    <option value="well">⛲ 許願池 (金幣)</option>
+                    <option value="vote">🗳️ 投票箱 (選票)</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                    ▼
+                </div>
+            </div>
+            <!-- 手機投稿切換按鈕 (便於在畫面上直接測試) -->
+            <button id="toggle-mobile-mode-btn" class="px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold text-sm md:text-base rounded-full shadow-sm transition transform hover:scale-105 cursor-pointer">
+                📱 手機投稿介面
             </button>
-            <button id="list-btn" class="px-6 py-3 bg-amber-300 hover:bg-amber-400 text-gray-700 font-bold text-xl rounded-full shadow-lg transition transform hover:scale-105 cursor-pointer flex items-center gap-2">
+            <button id="qr-btn" class="px-4 py-2.5 bg-pink-400 hover:bg-pink-500 text-white font-bold text-sm md:text-base rounded-full shadow-md transition transform hover:scale-105 cursor-pointer flex items-center gap-1.5">
+                <span>📱</span> QR Code
+            </button>
+            <button id="list-btn" class="px-4 py-2.5 bg-amber-300 hover:bg-amber-400 text-gray-800 font-bold text-sm md:text-base rounded-full shadow-md transition transform hover:scale-105 cursor-pointer flex items-center gap-1.5">
                 <span id="list-icon">🗑️</span> 清單 (<span id="count">0</span>)
             </button>
         </div>
     </header>
 
-    <div id="canvas-container" class="absolute inset-0 z-10 pointer-events-none"></div>
-
-    <!-- 底部視覺容器提示 -->
-    <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-10 text-center pointer-events-none flex flex-col items-center">
-        <div id="container-icon" class="text-6xl animate-bounce">🗑️</div>
-        <span id="container-text" class="text-xl font-bold text-gray-400 mt-2 bg-white/80 px-4 py-1 rounded-full shadow">垃圾桶 (點擊右上角檢視清單)</span>
+    <!-- 中央大型容器圖示：佔畫面高度約 50%，上方留出掉落物理軌道 -->
+    <div id="container-visual-wrapper" class="absolute left-1/2 bottom-3 transform -translate-x-1/2 z-10 pointer-events-none flex flex-col items-center select-none">
+        <!-- 動態置換的大型 SVG 容器圖樣 -->
+        <div id="container-svg-host" class="container-art svg-shadow flex justify-center items-end" style="height: 52vh; max-height: 520px; width: min(85vw, 680px);">
+            <!-- 由 JS 根據當前模組動態生成大型精美 SVG 圖形 -->
+        </div>
+        <!-- 容器名稱標籤 -->
+        <div class="mt-2 bg-white/90 backdrop-blur-md px-6 py-1.5 rounded-full shadow-md border border-gray-200 text-gray-700 font-bold text-sm md:text-base flex items-center gap-2">
+            <span id="tag-icon">🗑️</span>
+            <span id="tag-label">真心話垃圾桶 (投入紙球中)</span>
+        </div>
     </div>
 
-    <!-- 手機端輸入介面 -->
-    <div id="mobile-view" class="hidden absolute inset-0 bg-[#fff5f5] z-50 flex flex-col justify-center items-center p-6">
-        <div class="max-w-md w-full bg-white p-8 rounded-3xl shadow-2xl border-4 border-pink-200 text-center">
-            <div id="mobile-icon" class="text-5xl mb-4">📜</div>
-            <h2 id="mobile-heading" class="text-3xl font-bold text-gray-700 mb-2">寫下你的心聲</h2>
-            <p id="mobile-desc" class="text-gray-500 mb-6 text-lg">送出後，它會變成物件飛進大螢幕！</p>
-            <textarea id="user-input" rows="4" class="w-full p-4 border-2 border-pink-200 rounded-2xl text-xl focus:outline-none focus:border-pink-400 resize-none mb-6" placeholder="請在此輸入想說的話..."></textarea>
-            <button id="submit-btn" class="w-full py-4 bg-pink-400 hover:bg-pink-500 text-white font-bold text-2xl rounded-2xl shadow-lg transition transform active:scale-95 cursor-pointer">
-                🚀 投遞出去！
+    <!-- 物理引擎畫布區塊 (覆蓋全螢幕，物體由上方掉入大型容器) -->
+    <div id="canvas-container" class="absolute inset-0 z-20 pointer-events-none"></div>
+
+    <!-- 手機端輸入介面 (帶有 ?mobile=1 或點擊上方手機投稿時顯示) -->
+    <div id="mobile-view" class="hidden fixed inset-0 bg-[#fff8f5] z-50 flex flex-col justify-center items-center p-5 overflow-y-auto">
+        <button id="close-mobile-preview" class="absolute top-4 right-4 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-full text-sm cursor-pointer">
+            ✕ 返回大螢幕模式
+        </button>
+        <div class="max-w-md w-full bg-white p-7 rounded-3xl shadow-2xl border-4 border-pink-200 text-center relative">
+            <div id="mobile-icon" class="text-5xl mb-3">📜</div>
+            <h2 id="mobile-heading" class="text-2xl md:text-3xl font-bold text-gray-800 mb-1">寫下你的心聲</h2>
+            <p id="mobile-desc" class="text-gray-500 mb-5 text-sm md:text-base">送出後，它會變成紙球直接投入大螢幕中！</p>
+            <textarea id="user-input" rows="4" class="w-full p-4 border-2 border-pink-200 rounded-2xl text-lg focus:outline-none focus:border-pink-400 resize-none mb-4" placeholder="請在此輸入想說的話..."></textarea>
+            <button id="submit-btn" class="w-full py-3.5 bg-pink-400 hover:bg-pink-500 active:bg-pink-600 text-white font-bold text-xl rounded-2xl shadow-lg transition transform active:scale-95 cursor-pointer">
+                🚀 立即投遞！
             </button>
-            <div id="success-msg" class="hidden mt-4 text-green-500 font-bold text-xl animate-pulse">
+            <div id="success-msg" class="hidden mt-3 text-emerald-700 font-bold text-base p-3 bg-emerald-50 rounded-xl border border-emerald-200">
                 🎉 投遞成功！請看大螢幕～
             </div>
+            <div id="error-msg" class="hidden mt-3 text-red-600 font-bold text-sm p-2 bg-red-50 rounded-xl border border-red-200"></div>
         </div>
     </div>
 
     <!-- QR Code 彈窗 -->
     <div id="qr-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-        <div class="bg-white p-8 rounded-3xl shadow-2xl text-center max-w-sm w-full relative">
-            <h3 class="text-2xl font-bold text-gray-700 mb-4">掃描 QR Code 參與互動</h3>
-            <div id="qrcode" class="flex justify-center my-4 p-4 bg-gray-50 rounded-2xl border"></div>
-            <p class="text-gray-500 text-sm mb-6 break-all" id="share-url"></p>
-            <button id="close-qr" class="w-full py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold text-lg rounded-xl cursor-pointer">
+        <div class="bg-white p-7 rounded-3xl shadow-2xl text-center max-w-sm w-full relative">
+            <h3 class="text-xl font-bold text-gray-800 mb-2">手機掃碼立刻投遞</h3>
+            <p class="text-sm text-gray-500 mb-4">掃描後即可直接輸入文字投遞至現場畫面！</p>
+            <div id="qrcode" class="flex justify-center my-3 p-3 bg-gray-50 rounded-2xl border"></div>
+            <p class="text-gray-400 text-xs mb-5 break-all" id="share-url"></p>
+            <button id="close-qr" class="w-full py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-xl cursor-pointer">
                 關閉
             </button>
         </div>
@@ -82,19 +122,22 @@
 
     <!-- 清單與雲端備份彈窗 -->
     <div id="list-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col relative">
-            <div class="flex justify-between items-center mb-4 border-b pb-4">
-                <h3 id="modal-title" class="text-3xl font-bold text-gray-700">🗑️ 清單內容</h3>
-                <button id="close-list" class="text-gray-400 hover:text-gray-600 text-3xl font-bold cursor-pointer">&times;</button>
+        <div id="modal-content-box" class="bg-white p-7 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col relative">
+            <div class="flex justify-between items-center mb-3 border-b pb-3">
+                <h3 id="modal-title" class="text-2xl font-bold text-gray-800">🗑️ 收集清單內容</h3>
+                <button id="close-list" class="text-gray-400 hover:text-gray-600 text-2xl font-bold cursor-pointer">&times;</button>
             </div>
-            <div id="items-list" class="overflow-y-auto flex-1 space-y-3 pr-2 mb-4">
-                <!-- 動態清單 -->
+            <div id="items-list" class="overflow-y-auto flex-1 space-y-2.5 pr-2 mb-3">
+                <!-- 動態插入清單項目 -->
             </div>
-            <div class="border-t pt-4 flex flex-col gap-3">
-                <input type="text" id="gas-url" value="https://script.google.com/macros/s/AKfycbwKCtrPyuJE3stRZl3Iby5oFx1E8p8X_pNze8JZe_lq17xHdAHql-okINzVpMnEDCiz/exec" placeholder="請輸入 Google Apps Script 部署網址 (Web App URL)" class="w-full p-3 border rounded-xl text-sm focus:outline-none focus:border-pink-400">
+            <!-- 備份設定與按鈕區 -->
+            <div class="border-t pt-3 flex flex-col gap-2">
+                <div class="flex items-center gap-2">
+                    <input type="text" id="gas-url" value="https://script.google.com/macros/s/AKfycbwKCtrPyuJE3stRZl3Iby5oFx1E8p8X_pNze8JZe_lq17xHdAHql-okINzVpMnEDCiz/exec" placeholder="請輸入 Google Apps Script 部署網址 (Web App URL)" class="flex-1 p-2.5 border rounded-xl text-xs text-gray-600 focus:outline-none focus:border-pink-400">
+                </div>
                 <div class="flex justify-between items-center">
-                    <span id="backup-status" class="text-sm text-gray-500"></span>
-                    <button id="backup-btn" class="px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow cursor-pointer transition">
+                    <span id="backup-status" class="text-xs text-gray-500 font-medium"></span>
+                    <button id="backup-btn" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow cursor-pointer transition text-sm">
                         ☁️ 備份清單至 Google Drive
                     </button>
                 </div>
@@ -102,13 +145,12 @@
         </div>
     </div>
 
-    <!-- Firebase SDK 與互動邏輯 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // 已代入您的專案金鑰
+        // 使用者提供的 Firebase 專案設定
         const firebaseConfig = {
             apiKey: "AIzaSyB-1enGLCK0WdU3g8mPe6PSlEeH4C3fHfs",
             authDomain: "textwall-fc112.firebaseapp.com",
@@ -117,121 +159,158 @@
             messagingSenderId: "718086100693",
             appId: "1:718086100693:web:7f859c361faa776409745c"
         };
-
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = 'macaron-textwall-prod';
+        const appId = 'macaron-interactive-wall';
 
         let currentUser = null;
         let allMessages = [];
-        let currentModule = 'trash';
+        let currentModule = 'trash'; // trash, well, vote
 
+        // 模組定義 (包含標題、文案、以及佔 1/2 畫面高度的大型向量圖形)
         const moduleConfigs = {
             trash: {
-                title: "✨ 丟掉煩惱、留下真心話 ✨",
+                title: "丟掉煩惱、留下真心話",
                 subtitle: "請用手機掃描 QR Code 把想法丟進垃圾桶！",
                 btnText: "🗑️ 垃圾桶清單",
                 icon: "🗑️",
+                tagLabel: "真心話垃圾桶 (投入紙球中)",
                 mobileIcon: "📜",
-                mobileHeading: "寫下你的心聲",
-                mobileDesc: "送出後，它會變成紙球飛進大螢幕！",
+                mobileHeading: "寫下你的真心話",
+                mobileDesc: "送出後，它會揉成紙球直接拋進大垃圾桶！",
                 submitText: "🚀 揉成紙球丟出去！",
-                colorList: ['#ffb7b2', '#b5ead7', '#ffdac1', '#e2f0cb', '#c7ceea']
+                colorList: ['#ffb7b2', '#b5ead7', '#ffdac1', '#e2f0cb', '#c7ceea'],
+                // 大垃圾桶 SVG (約 50% 視窗高度，開口寬敞向上)
+                renderSvg: () => `
+                    <svg viewBox="0 0 500 400" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- 桶身陰影底座 -->
+                        <ellipse cx="250" cy="375" rx="170" ry="18" fill="rgba(0,0,0,0.08)"/>
+                        <!-- 垃圾桶身本體 (立體漸層) -->
+                        <defs>
+                            <linearGradient id="trashBodyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#a8b2c1"/>
+                                <stop offset="25%" stop-color="#d6dce5"/>
+                                <stop offset="70%" stop-color="#bcc7d6"/>
+                                <stop offset="100%" stop-color="#939fb2"/>
+                            </linearGradient>
+                            <linearGradient id="trashRimGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#cbd5e1"/>
+                                <stop offset="100%" stop-color="#94a3b8"/>
+                            </linearGradient>
+                        </defs>
+                        <!-- 桶身 -->
+                        <path d="M 85 85 L 125 365 Q 130 380 160 380 L 340 380 Q 370 380 375 365 L 415 85 Z" fill="url(#trashBodyGrad)" stroke="#64748b" stroke-width="6"/>
+                        <!-- 桶身立體凹槽線條 -->
+                        <line x1="180" y1="110" x2="195" y2="360" stroke="#7e8d9f" stroke-width="5" stroke-linecap="round" opacity="0.5"/>
+                        <line x1="250" y1="110" x2="250" y2="365" stroke="#ffffff" stroke-width="6" stroke-linecap="round" opacity="0.6"/>
+                        <line x1="320" y1="110" x2="305" y2="360" stroke="#7e8d9f" stroke-width="5" stroke-linecap="round" opacity="0.5"/>
+                        <!-- 垃圾桶頂部開口 (大橢圓，讓紙球掉進內部) -->
+                        <ellipse cx="250" cy="85" rx="165" ry="32" fill="#2d3748" stroke="url(#trashRimGrad)" stroke-width="12"/>
+                        <!-- 開口內部深處陰影 -->
+                        <ellipse cx="250" cy="87" rx="145" ry="22" fill="#1a202c"/>
+                    </svg>
+                `
             },
             well: {
-                title: "🪙 許願池：投下心中的夢想 🪙",
+                title: "許願池：投下心中的夢想",
                 subtitle: "掃描 QR Code 投入金幣，讓願望在許願池閃耀！",
                 btnText: "⛲ 許願金幣簿",
                 icon: "⛲",
+                tagLabel: "石造許願池 (金幣累積中)",
                 mobileIcon: "🪙",
-                mobileHeading: "寫下您的心願",
+                mobileHeading: "寫下你的心願",
                 mobileDesc: "送出後，金幣會閃耀著落入大螢幕許願池！",
-                submitText: "✨ 投入許願池！",
-                colorList: ['#ffd700', '#ffecb3', '#ffe082', '#ffca28']
+                submitText: "✨ 投入許願金幣！",
+                colorList: ['#ffd700', '#ffca28', '#ffe082', '#ffc107', '#ffb300'],
+                // 大許願池 SVG (約 50% 視窗高度，古典石造池畔與蔚藍池水)
+                renderSvg: () => `
+                    <svg viewBox="0 0 540 400" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- 池底陰影 -->
+                        <ellipse cx="270" cy="375" rx="230" ry="20" fill="rgba(0,0,0,0.1)"/>
+                        <defs>
+                            <linearGradient id="stoneWallGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#b8a99a"/>
+                                <stop offset="30%" stop-color="#e2d8cd"/>
+                                <stop offset="70%" stop-color="#d4c7b8"/>
+                                <stop offset="100%" stop-color="#9e8f81"/>
+                            </linearGradient>
+                            <linearGradient id="waterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#38bdf8"/>
+                                <stop offset="60%" stop-color="#0284c7"/>
+                                <stop offset="100%" stop-color="#0369a1"/>
+                            </linearGradient>
+                        </defs>
+                        <!-- 石頭外牆 -->
+                        <path d="M 40 100 L 70 350 Q 80 375 140 375 L 400 375 Q 460 375 470 350 L 500 100 Z" fill="url(#stoneWallGrad)" stroke="#786a5a" stroke-width="7"/>
+                        <!-- 石塊拼接立體花紋 -->
+                        <path d="M 120 180 Q 200 200 320 180" stroke="#786a5a" stroke-width="4" stroke-dasharray="8 6" opacity="0.6"/>
+                        <path d="M 90 270 Q 270 295 440 270" stroke="#786a5a" stroke-width="4" stroke-dasharray="8 6" opacity="0.6"/>
+                        <!-- 許願池頂部大石圈邊緣 -->
+                        <ellipse cx="270" cy="100" rx="230" ry="40" fill="#9e8f81" stroke="#685a4a" stroke-width="10"/>
+                        <!-- 碧波盪漾的池水面 (金幣掉落堆疊區) -->
+                        <ellipse cx="270" cy="100" rx="205" ry="30" fill="url(#waterGrad)"/>
+                        <!-- 池水波光反射 -->
+                        <ellipse cx="250" cy="95" rx="140" ry="14" fill="#7dd3fc" opacity="0.45"/>
+                    </svg>
+                `
             },
             vote: {
-                title: "🗳️ 即時投票箱：投下神聖的一票 🗳️",
+                title: "即時投票箱：投下神聖的一票",
                 subtitle: "掃描 QR Code 傳送選票，即時統計您的選項！",
                 btnText: "🗳️ 選票清單",
                 icon: "🗳️",
+                tagLabel: "民主投票箱 (選票投入中)",
                 mobileIcon: "📝",
-                mobileHeading: "輸入您的選項/意見",
+                mobileHeading: "輸入您的票選意見",
                 mobileDesc: "送出後，摺疊選票會投入大螢幕投票箱！",
                 submitText: "📥 投入投票箱！",
-                colorList: ['#b2dfdb', '#80cbc4', '#4db6ac', '#a7ffeb']
+                colorList: ['#99f6e4', '#5eead4', '#2dd4bf', '#14b8a6', '#0d9488'],
+                // 大投票箱 SVG (約 50% 視窗高度，投票口居中且開闊)
+                renderSvg: () => `
+                    <svg viewBox="0 0 500 400" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- 箱底陰影 -->
+                        <ellipse cx="250" cy="380" rx="190" ry="18" fill="rgba(0,0,0,0.12)"/>
+                        <defs>
+                            <linearGradient id="boxFrontGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#ffffff"/>
+                                <stop offset="100%" stop-color="#e2e8f0"/>
+                            </linearGradient>
+                            <linearGradient id="boxTopGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#0f766e"/>
+                                <stop offset="50%" stop-color="#14b8a6"/>
+                                <stop offset="100%" stop-color="#0d9488"/>
+                            </linearGradient>
+                        </defs>
+                        <!-- 投票箱前面板 -->
+                        <path d="M 60 110 L 80 365 Q 85 380 120 380 L 380 380 Q 415 380 420 365 L 440 110 Z" fill="url(#boxFrontGrad)" stroke="#0f766e" stroke-width="7"/>
+                        <!-- 箱身投票徽章 / 標籤 -->
+                        <rect x="180" y="200" width="140" height="90" rx="16" fill="#f0fdfa" stroke="#0d9488" stroke-width="4"/>
+                        <text x="250" y="240" font-size="28" text-anchor="middle" fill="#0f766e" font-weight="bold">🗳️ 投票箱</text>
+                        <text x="250" y="270" font-size="14" text-anchor="middle" fill="#115e59">BALLOT BOX</text>
+                        <!-- 投票箱頂蓋 (透視角度) -->
+                        <polygon points="30,110 90,60 410,60 470,110" fill="url(#boxTopGrad)" stroke="#0f766e" stroke-width="6"/>
+                        <!-- 頂部投票狹縫開口 (特地加大引導掉落) -->
+                        <ellipse cx="250" cy="85" rx="110" ry="12" fill="#042f2e" stroke="#ccfbf1" stroke-width="3"/>
+                    </svg>
+                `
             }
         };
 
-        function updateModuleUI(mod) {
-            currentModule = mod;
-            const cfg = moduleConfigs[mod];
-            document.getElementById('main-title').innerText = cfg.title;
-            document.getElementById('main-subtitle').innerText = cfg.subtitle;
-            document.getElementById('list-icon').innerText = cfg.icon;
-            document.getElementById('container-icon').innerText = cfg.icon;
-            document.getElementById('container-text').innerText = `${cfg.btnText.split(' ')[1]} (點擊右上角檢視清單)`;
-            
-            document.getElementById('mobile-icon').innerText = cfg.mobileIcon;
-            document.getElementById('mobile-heading').innerText = cfg.mobileHeading;
-            document.getElementById('mobile-desc').innerText = cfg.mobileDesc;
-            document.getElementById('submit-btn').innerText = cfg.submitText;
-            
-            updateListContent();
-        }
+        const Engine = Matter.Engine,
+              Render = Matter.Render,
+              Runner = Matter.Runner,
+              Bodies = Matter.Bodies,
+              Composite = Matter.Composite,
+              Body = Matter.Body;
 
-        document.getElementById('module-select').addEventListener('change', (e) => {
-            updateModuleUI(e.target.value);
-        });
+        const engine = Engine.create();
+        const world = engine.world;
+        engine.world.gravity.y = 1.05;
 
-        signInAnonymously(auth).catch((error) => console.error("Auth Error:", error));
-        onAuthStateChanged(auth, (user) => {
-            currentUser = user;
-            if (user) initFirestoreListener();
-        });
-
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('mobile') === '1') {
-            document.getElementById('mobile-view').classList.remove('hidden');
-        }
-
-        document.getElementById('submit-btn').addEventListener('click', async () => {
-            const text = document.getElementById('user-input').value.trim();
-            if (!text) {
-                alert('請輸入一些文字再送出喔！');
-                return;
-            }
-            if (!currentUser) return;
-
-            try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
-                    text: text,
-                    module: currentModule,
-                    timestamp: Date.now()
-                });
-                document.getElementById('user-input').value = '';
-                document.getElementById('success-msg').classList.remove('hidden');
-                setTimeout(() => document.getElementById('success-msg').classList.add('hidden'), 3000);
-            } catch (e) {
-                console.error("Error adding document: ", e);
-            }
-        });
-
-        // Matter.js 物理引擎
-        let Engine = Matter.Engine,
-            Render = Matter.Render,
-            Runner = Matter.Runner,
-            Bodies = Matter.Bodies,
-            Composite = Matter.Composite,
-            Body = Matter.Body;
-
-        let engine = Engine.create();
-        let world = engine.world;
-        engine.world.gravity.y = 1;
-
-        let container = document.getElementById('canvas-container');
-        let render = Render.create({
-            element: container,
+        const canvasHost = document.getElementById('canvas-container');
+        const render = Render.create({
+            element: canvasHost,
             engine: engine,
             options: {
                 width: window.innerWidth,
@@ -241,57 +320,153 @@
             }
         });
         Render.run(render);
-        let runner = Runner.create();
+        const runner = Runner.create();
         Runner.run(runner, engine);
 
-        let wallOptions = { isStatic: true, render: { visible: false } };
-        let ground = Bodies.rectangle(window.innerWidth / 2, window.innerHeight + 50, window.innerWidth, 100, wallOptions);
-        let leftWall = Bodies.rectangle(-50, window.innerHeight / 2, 100, window.innerHeight, wallOptions);
-        let rightWall = Bodies.rectangle(window.innerWidth + 50, window.innerHeight / 2, 100, window.innerHeight, wallOptions);
-        let leftFunnel = Bodies.rectangle(window.innerWidth / 2 - 150, window.innerHeight - 100, 200, 20, wallOptions);
-        Body.setAngle(leftFunnel, 0.3);
-        let rightFunnel = Bodies.rectangle(window.innerWidth / 2 + 150, window.innerHeight - 100, 200, 20, wallOptions);
-        Body.setAngle(rightFunnel, -0.3);
+        // 建立配合中央大容器（高約 50vh）的物理邊界
+        // 確保物體從最上方掉落，直接落入大容器開口並堆疊在容器內部！
+        let containerFloor, containerLeftWall, containerRightWall;
 
-        Composite.add(world, [ground, leftWall, rightWall, leftFunnel, rightFunnel]);
+        function updatePhysicsWalls() {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+
+            // 移除舊的邊界
+            if (containerFloor) Composite.remove(world, containerFloor);
+            if (containerLeftWall) Composite.remove(world, containerLeftWall);
+            if (containerRightWall) Composite.remove(world, containerRightWall);
+
+            // 計算大圖形容器的中心與內部有效承接範圍
+            // 容器高度約為 52vh，底部留 12px
+            const containerHeight = Math.min(h * 0.52, 520);
+            const containerWidth = Math.min(w * 0.85, 680);
+            const centerX = w / 2;
+            const bottomY = h - 20;
+
+            // 容器底部地板 (放置於大圖樣底部內緣)
+            containerFloor = Bodies.rectangle(centerX, bottomY, containerWidth * 0.75, 40, {
+                isStatic: true,
+                render: { visible: false }
+            });
+
+            // 容器左右側壁 (貼合大容器左右兩側，阻擋物件滾出容器外)
+            const wallH = containerHeight * 0.85;
+            const wallY = bottomY - wallH / 2;
+            containerLeftWall = Bodies.rectangle(centerX - (containerWidth * 0.75) / 2, wallY, 30, wallH, {
+                isStatic: true,
+                render: { visible: false }
+            });
+            containerRightWall = Bodies.rectangle(centerX + (containerWidth * 0.75) / 2, wallY, 30, wallH, {
+                isStatic: true,
+                render: { visible: false }
+            });
+
+            Composite.add(world, [containerFloor, containerLeftWall, containerRightWall]);
+        }
+
+        updatePhysicsWalls();
 
         window.addEventListener('resize', () => {
             render.canvas.width = window.innerWidth;
             render.canvas.height = window.innerHeight;
-            Body.setPosition(ground, { x: window.innerWidth / 2, y: window.innerHeight + 50 });
-            Body.setPosition(rightWall, { x: window.innerWidth + 50, y: window.innerHeight / 2 });
-            Body.setPosition(leftFunnel, { x: window.innerWidth / 2 - 150, y: window.innerHeight - 100 });
-            Body.setPosition(rightFunnel, { x: window.innerWidth / 2 + 150, y: window.innerHeight - 100 });
+            updatePhysicsWalls();
+        });
+
+        function updateModuleUI(mod) {
+            currentModule = mod;
+            const cfg = moduleConfigs[mod];
+
+            // 標題與標籤更新
+            document.getElementById('title-icon').innerText = cfg.icon;
+            document.getElementById('title-text').innerText = cfg.title;
+            document.getElementById('main-subtitle').innerText = cfg.subtitle;
+            document.getElementById('list-icon').innerText = cfg.icon;
+            document.getElementById('tag-icon').innerText = cfg.icon;
+            document.getElementById('tag-label').innerText = cfg.tagLabel;
+
+            // 置換中央大容器圖示
+            document.getElementById('container-svg-host').innerHTML = cfg.renderSvg();
+
+            // 手機介面
+            document.getElementById('mobile-icon').innerText = cfg.mobileIcon;
+            document.getElementById('mobile-heading').innerText = cfg.mobileHeading;
+            document.getElementById('mobile-desc').innerText = cfg.mobileDesc;
+            document.getElementById('submit-btn').innerText = cfg.submitText;
+
+            // 更新清單對話框
+            updateListContent();
+        }
+
+        // 初始化顯示垃圾桶模組的大圖樣
+        updateModuleUI('trash');
+
+        document.getElementById('module-select').addEventListener('change', (e) => {
+            updateModuleUI(e.target.value);
         });
 
         function spawnObject(moduleType) {
-            let startX = Math.random() * (window.innerWidth - 200) + 100;
-            let cfg = moduleConfigs[moduleType];
-            let color = cfg.colorList[Math.floor(Math.random() * cfg.colorList.length)];
+            const centerX = window.innerWidth / 2;
+            const spawnSpread = Math.min(window.innerWidth * 0.35, 240);
+            const startX = centerX + (Math.random() * spawnSpread - spawnSpread / 2);
+            const startY = -40; // 從畫面最頂部掉落，預留充足動畫衝擊空間
+
+            const cfg = moduleConfigs[moduleType] || moduleConfigs.trash;
+            const color = cfg.colorList[Math.floor(Math.random() * cfg.colorList.length)];
             let body;
 
-            if (moduleType === 'vote') {
-                body = Bodies.rectangle(startX, -50, 60, 40, {
-                    restitution: 0.4,
-                    friction: 0.2,
-                    angle: Math.random() * Math.PI,
-                    render: { fillStyle: color, strokeStyle: '#ffffff', lineWidth: 2 }
+            if (moduleType === 'well') {
+                // 金幣：具備高彈跳感，邊框發光
+                body = Bodies.circle(startX, startY, 26, {
+                    restitution: 0.65,
+                    friction: 0.08,
+                    density: 0.002,
+                    render: {
+                        fillStyle: color,
+                        strokeStyle: '#ffffff',
+                        lineWidth: 3
+                    }
                 });
-            } else if (moduleType === 'well') {
-                body = Bodies.circle(startX, -50, 25, {
-                    restitution: 0.8,
-                    friction: 0.05,
-                    render: { fillStyle: color, strokeStyle: '#ffa000', lineWidth: 3 }
+            } else if (moduleType === 'vote') {
+                // 選票：矩形紙箋，空中翻轉掉落
+                body = Bodies.rectangle(startX, startY, 64, 40, {
+                    restitution: 0.25,
+                    friction: 0.3,
+                    density: 0.0015,
+                    angle: (Math.random() - 0.5) * 1.5,
+                    render: {
+                        fillStyle: color,
+                        strokeStyle: '#ffffff',
+                        lineWidth: 2
+                    }
                 });
             } else {
-                body = Bodies.circle(startX, -50, 30, {
-                    restitution: 0.6,
-                    friction: 0.1,
-                    render: { fillStyle: color, strokeStyle: '#ffffff', lineWidth: 3 }
+                // 紙球：揉成多角感圓形
+                body = Bodies.circle(startX, startY, 30, {
+                    restitution: 0.45,
+                    friction: 0.2,
+                    density: 0.0018,
+                    render: {
+                        fillStyle: color,
+                        strokeStyle: '#ffffff',
+                        lineWidth: 3
+                    }
                 });
             }
+
             Composite.add(world, body);
         }
+
+        signInAnonymously(auth).then((cred) => {
+            currentUser = cred.user;
+            initFirestoreListener();
+        }).catch((err) => {
+            console.error("Firebase 登入失敗:", err);
+            const errEl = document.getElementById('error-msg');
+            if (errEl) {
+                errEl.innerText = "資料庫連線失敗，請檢查網路或專案權限";
+                errEl.classList.remove('hidden');
+            }
+        });
 
         function initFirestoreListener() {
             const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'messages'));
@@ -302,18 +477,91 @@
                 });
                 newMessages.sort((a, b) => b.timestamp - a.timestamp);
 
+                // 若有新留言進來，立即產生對應物件掉落！
                 if (newMessages.length > allMessages.length && allMessages.length > 0) {
-                    let latest = newMessages[0];
-                    spawnObject(latest.module || 'trash');
+                    const diff = newMessages.length - allMessages.length;
+                    for (let i = 0; i < Math.min(diff, 5); i++) {
+                        const latest = newMessages[i];
+                        setTimeout(() => {
+                            spawnObject(latest.module || currentModule);
+                        }, i * 200);
+                    }
                 }
 
                 allMessages = newMessages;
-                let currentFiltered = allMessages.filter(m => (m.module || 'trash') === currentModule);
-                document.getElementById('count').innerText = currentFiltered.length;
+                const filtered = allMessages.filter(m => (m.module || 'trash') === currentModule);
+                document.getElementById('count').innerText = filtered.length;
                 updateListContent();
             }, (error) => {
-                console.error("Firestore Error:", error);
+                console.error("Firestore 監聽失敗:", error);
             });
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('mobile') === '1') {
+            document.getElementById('mobile-view').classList.remove('hidden');
+        }
+
+        // 點擊頂端「📱 手機投稿介面」按鈕可直接彈出手機視窗進行測試
+        document.getElementById('toggle-mobile-mode-btn').addEventListener('click', () => {
+            document.getElementById('mobile-view').classList.remove('hidden');
+        });
+        document.getElementById('close-mobile-preview').addEventListener('click', () => {
+            document.getElementById('mobile-view').classList.add('hidden');
+        });
+
+        document.getElementById('submit-btn').addEventListener('click', async () => {
+            const inputEl = document.getElementById('user-input');
+            const text = inputEl.value.trim();
+            const successMsg = document.getElementById('success-msg');
+            const errorMsg = document.getElementById('error-msg');
+
+            successMsg.classList.add('hidden');
+            errorMsg.classList.add('hidden');
+
+            if (!text) {
+                errorMsg.innerText = "請輸入文字後再送出喔！";
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            if (!currentUser) {
+                errorMsg.innerText = "正在連線到資料庫，請稍候重試...";
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            const btn = document.getElementById('submit-btn');
+            try {
+                btn.disabled = true;
+                btn.innerText = "🚀 投遞中...";
+
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
+                    text: text,
+                    module: currentModule,
+                    timestamp: Date.now()
+                });
+
+                // 本機同步立即掉落一顆提升互動爽度
+                spawnObject(currentModule);
+
+                inputEl.value = '';
+                successMsg.classList.remove('hidden');
+                setTimeout(() => {
+                    successMsg.classList.add('hidden');
+                }, 3500);
+            } catch (err) {
+                console.error("送出失敗:", err);
+                errorMsg.innerText = "傳送失敗，請確認網路連線";
+                errorMsg.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = moduleConfigs[currentModule].submitText;
+            }
+        });
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
 
         function updateListContent() {
@@ -322,35 +570,32 @@
             const listEl = document.getElementById('items-list');
             listEl.innerHTML = '';
 
-            let filtered = allMessages.filter(m => (m.module || 'trash') === currentModule);
+            const filtered = allMessages.filter(m => (m.module || 'trash') === currentModule);
             if (filtered.length === 0) {
-                listEl.innerHTML = `<p class="text-center text-gray-400 py-8 text-xl">目前還沒有任何紀錄喔！</p>`;
+                listEl.innerHTML = `<p class="text-center text-gray-400 py-8 text-base">目前容器中還沒有任何紀錄喔！</p>`;
                 return;
             }
 
             filtered.forEach((msg, index) => {
-                let dateStr = new Date(msg.timestamp).toLocaleTimeString();
-                let colorClass = ['macaron-pink', 'macaron-blue', 'macaron-yellow', 'macaron-purple', 'macaron-mint'][index % 5];
-                let item = document.createElement('div');
-                item.className = `p-4 rounded-2xl ${colorClass} text-gray-700 shadow-md flex justify-between items-center`;
+                const dateStr = new Date(msg.timestamp).toLocaleTimeString('zh-TW', { hour12: false });
+                const colorClass = ['macaron-pink', 'macaron-blue', 'macaron-yellow', 'macaron-purple', 'macaron-mint'][index % 5];
+                const item = document.createElement('div');
+                item.className = `p-3.5 rounded-2xl ${colorClass} text-gray-800 shadow-sm flex justify-between items-center border border-white/60`;
                 item.innerHTML = `
-                    <div class="text-xl font-medium break-all pr-4">📝 ${escapeHtml(msg.text)}</div>
-                    <div class="text-xs text-gray-500 whitespace-nowrap">${dateStr}</div>
+                    <div class="text-base font-medium break-all pr-3">${escapeHtml(msg.text)}</div>
+                    <div class="text-xs text-gray-600 whitespace-nowrap">${dateStr}</div>
                 `;
                 listEl.appendChild(item);
             });
         }
 
-        function escapeHtml(text) {
-            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        }
-
+        // QR Code
         const currentUrl = window.location.href.split('?')[0] + '?mobile=1';
         document.getElementById('share-url').innerText = currentUrl;
         new QRCode(document.getElementById("qrcode"), {
             text: currentUrl,
-            width: 200,
-            height: 200
+            width: 190,
+            height: 190
         });
 
         document.getElementById('qr-btn').addEventListener('click', () => {
@@ -367,17 +612,18 @@
             document.getElementById('list-modal').classList.add('hidden');
         });
 
+        // 雲端備份至 Google Drive (透過 Google Apps Script)
         document.getElementById('backup-btn').addEventListener('click', async () => {
             const gasUrl = document.getElementById('gas-url').value.trim();
             if (!gasUrl) {
-                alert('請先填入您的 Google Apps Script 部署網址 (Web App URL)');
+                alert('請先填入您的 Google Apps Script 部署網址');
                 return;
             }
 
             const statusEl = document.getElementById('backup-status');
-            statusEl.innerText = "⏳ 正在打包並上傳至 Google Drive...";
+            statusEl.innerText = "⏳ 正在備份至 Google Drive...";
 
-            let filtered = allMessages.filter(m => (m.module || 'trash') === currentModule);
+            const filtered = allMessages.filter(m => (m.module || 'trash') === currentModule);
 
             try {
                 await fetch(gasUrl, {
@@ -389,11 +635,10 @@
                         messages: filtered
                     })
                 });
-
-                statusEl.innerText = "✅ 備份請求已送出！請至您的 Google Drive 資料夾確認檔案。";
+                statusEl.innerText = "✅ 備份請求已送出！請至 Google Drive 資料夾確認。";
             } catch (err) {
                 console.error(err);
-                statusEl.innerText = "❌ 備份失敗，請檢查 GAS 網址與部署權限。";
+                statusEl.innerText = "❌ 備份失敗，請檢查 GAS 部署權限。";
             }
         });
     </script>

@@ -148,6 +148,9 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    <!-- Firebase SDK & 核心互動邏輯 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // 使用者提供的 Firebase 專案設定
@@ -160,11 +163,9 @@
             appId: "1:718086100693:web:7f859c361faa776409745c"
         };
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = 'macaron-interactive-wall';
 
-        let currentUser = null;
         let allMessages = [];
         let currentModule = 'trash'; // trash, well, vote
 
@@ -394,15 +395,15 @@
             document.getElementById('submit-btn').innerText = cfg.submitText;
 
             // 更新清單對話框
-            updateListContent();
-        }
-
-        // 初始化顯示垃圾桶模組的大圖樣
+        // 初始化模組大圖樣
         updateModuleUI('trash');
 
         document.getElementById('module-select').addEventListener('change', (e) => {
             updateModuleUI(e.target.value);
         });
+
+        // 直接啟動 Firestore 即時監聽 (無需等待匿名登入)
+        initFirestoreListener();
 
         function spawnObject(moduleType) {
             const centerX = window.innerWidth / 2;
@@ -525,12 +526,6 @@
                 return;
             }
 
-            if (!currentUser) {
-                errorMsg.innerText = "正在連線到資料庫，請稍候重試...";
-                errorMsg.classList.remove('hidden');
-                return;
-            }
-
             const btn = document.getElementById('submit-btn');
             try {
                 btn.disabled = true;
@@ -542,7 +537,7 @@
                     timestamp: Date.now()
                 });
 
-                // 本機同步立即掉落一顆提升互動爽度
+                // 本機立即掉落一顆提升即時互動感
                 spawnObject(currentModule);
 
                 inputEl.value = '';
@@ -552,7 +547,7 @@
                 }, 3500);
             } catch (err) {
                 console.error("送出失敗:", err);
-                errorMsg.innerText = "傳送失敗，請確認網路連線";
+                errorMsg.innerText = "傳送失敗，請確認 Firebase Rules 規則是否已設為 allow read, write: if true;";
                 errorMsg.classList.remove('hidden');
             } finally {
                 btn.disabled = false;
